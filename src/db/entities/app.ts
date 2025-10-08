@@ -24,12 +24,10 @@ export const AppEntity = new EntitySchema<IApp>({
     code: {
       type: 'varchar',
       length: 50,
-      nullable: false,
     },
     name: {
       type: 'varchar',
       length: 50,
-      nullable: false,
     },
     configs: {
       type: 'jsonb',
