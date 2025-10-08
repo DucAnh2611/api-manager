@@ -1,0 +1,64 @@
+import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+
+export class DtoAppDetail {
+  @IsUUID()
+  id: string;
+}
+
+export class DtoAppCreate {
+  @IsNotEmpty()
+  @IsString()
+  code: string;
+
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+}
+
+export class DtoAppUpdate {
+  @IsNotEmpty()
+  @IsUUID()
+  id: string;
+
+  @IsOptional()
+  @IsString()
+  code: string;
+
+  @IsOptional()
+  @IsString()
+  name: string;
+}
+
+export class DtoAppDelete {
+  @IsArray()
+  @IsUUID('all', { each: true })
+  ids: string[];
+}
+
+export class DtoAppRevokeApiKey {
+  @IsNotEmpty()
+  @IsUUID()
+  id: string;
+}
+
+export class DtoAppGenerateApiKey {
+  @IsNotEmpty()
+  @IsUUID()
+  id: string;
+}
+
+export class DtoAppGetConfigs {
+  @IsNotEmpty()
+  @IsString()
+  code: string;
+}
+
+export class DtoAppUpConfig {
+  @IsNotEmpty()
+  @IsString()
+  code: string;
+
+  @IsNotEmpty()
+  @IsObject()
+  configs: Record<string, any>;
+}
