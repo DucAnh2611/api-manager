@@ -47,7 +47,7 @@ const Commands = (apiKeyService: ApiKeyService): ICliCommand[] => [
           ['id', 'Id'],
           ['type', 'Api key Type'],
           ['code', 'App Code'],
-          ['formattedKey', 'Formatted Api Key'],
+          ['formattedKey', 'Header (x-api-key)'],
           ['description', 'Description'],
           ['active', 'Active'],
         ],
@@ -92,7 +92,7 @@ const Commands = (apiKeyService: ApiKeyService): ICliCommand[] => [
           ['id', 'Id'],
           ['type', 'Api key Type'],
           ['code', 'App Code'],
-          ['formattedKey', 'Formatted Api Key'],
+          ['formattedKey', 'Header (x-api-key)'],
           ['active', 'Active'],
         ]
       );
