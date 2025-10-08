@@ -2,6 +2,9 @@
   "name": "app_configs",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "app_config": "./bin/app_config.ts"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",

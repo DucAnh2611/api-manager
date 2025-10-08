@@ -23,12 +23,12 @@ export const AppEntity = new EntitySchema<IApp>({
     },
     code: {
       type: 'varchar',
-      length: 10,
+      length: 50,
       nullable: false,
     },
     name: {
       type: 'varchar',
-      length: 20,
+      length: 50,
       nullable: false,
     },
     configs: {

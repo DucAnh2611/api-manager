@@ -80,7 +80,7 @@ export class AppService {
 
     const { code, name } = dto;
 
-    const saved = await this.appRepository.save({ code, name });
+    const saved = await this.appRepository.save({ code: this.safeCode(code), name });
 
     return saved;
   }
@@ -98,7 +98,7 @@ export class AppService {
         id,
       },
       {
-        code,
+        code: this.safeCode(code),
         name,
       }
     );
@@ -122,5 +122,9 @@ export class AppService {
 
   public getById(id: string) {
     return this.appRepository.findOneBy({ id });
+  }
+
+  private safeCode(code: string) {
+    return code.replace(new RegExp(' '), '_').toUpperCase();
   }
 }

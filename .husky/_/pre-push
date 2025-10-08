@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-npm run prepush
+. "$(dirname "$0")/h"
