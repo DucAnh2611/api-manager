@@ -1,4 +1,13 @@
-import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+import { EAppConfigsUpdateType } from '../../enums';
 
 export class DtoAppDetail {
   @IsUUID()
@@ -35,12 +44,6 @@ export class DtoAppDelete {
   ids: string[];
 }
 
-export class DtoAppRevokeApiKey {
-  @IsNotEmpty()
-  @IsUUID()
-  id: string;
-}
-
 export class DtoAppGenerateApiKey {
   @IsNotEmpty()
   @IsUUID()
@@ -55,8 +58,8 @@ export class DtoAppGetConfigs {
 
 export class DtoAppUpConfig {
   @IsNotEmpty()
-  @IsString()
-  code: string;
+  @IsEnum(EAppConfigsUpdateType)
+  mode: EAppConfigsUpdateType;
 
   @IsNotEmpty()
   @IsObject()

@@ -3,10 +3,10 @@ import { EValidateDtoType } from '../enums';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 
-export const ValidateDto = (dtoClass: any, sources: EValidateDtoType[] = []) => {
+export const ValidateDto = (sources: Array<{ dto: any; type: EValidateDtoType }> = []) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     for (const source of sources) {
-      await validateEachSource(dtoClass, source, req, res);
+      await validateEachSource(source.dto, source.type, req, res);
     }
 
     (req as any).isValidateDto = true;
@@ -17,11 +17,11 @@ export const ValidateDto = (dtoClass: any, sources: EValidateDtoType[] = []) => 
 
 const validateEachSource = async (
   dtoClass: any,
-  source: EValidateDtoType,
+  sourceType: EValidateDtoType,
   req: Request,
   res: Response
 ) => {
-  const data = req[source];
+  const data = req[sourceType];
   const dtoInstance = plainToInstance(dtoClass, data);
   const errors = await validate(dtoInstance, { whitelist: true, forbidNonWhitelisted: true });
 
@@ -35,10 +35,10 @@ const validateEachSource = async (
     return res.status(400).json({
       success: false,
       status: 400,
-      message: `Validation failed in ${source}`,
+      message: `Validation failed in ${sourceType}`,
       errors: formatted,
     });
   }
 
-  (req as any)[source] = dtoInstance;
+  (req as any)[sourceType] = dtoInstance;
 };

@@ -1,6 +1,6 @@
 import { Like } from 'typeorm';
 import { IApiKey } from '../db';
-import { formatString, generateBytes, hash, verify } from '../helpers';
+import { formatString, generateBytes, hash, signJwt, verify, verifyJwt } from '../helpers';
 import {
   DtoApiKeyCheckKeyType,
   DtoApiKeyGenerate,
@@ -8,26 +8,27 @@ import {
   DtoApiKeyReset,
   DtoApiKeyToggle,
   DtoApiKeyValidate,
+  TJwtApiKeyPayload,
 } from '../types';
 import { AppService } from './app';
 import { ApiKeyRepository } from '../repositories';
-import { API_KEY_CONFIG } from '../configs';
+import { EApiKeyType, EAppConfigsUpdateType } from '../enums';
 
 export class ApiKeyService {
+  private readonly DEFAULT_JWT_SECRET: string = 'default';
+
   constructor(
     private readonly apiKeyRepository: ApiKeyRepository,
     private readonly appService: AppService
   ) {}
 
   public async validate(dto: DtoApiKeyValidate) {
-    const app = await this.appService.getByCode(dto.appCode);
-    if (!app) {
-      throw new Error('App not exist!');
-    }
-
     const apiKeys = await this.apiKeyRepository.find({
       where: {
-        appId: app.id,
+        app: {
+          code: dto.appCode,
+        },
+        type: dto.type,
         active: true,
       },
     });
@@ -68,7 +69,7 @@ export class ApiKeyService {
     return { ...dto, type: apiKey.type, active: updateApiKey.active };
   }
 
-  public async generate(dto: DtoApiKeyGenerate) {
+  public async generate(dto: DtoApiKeyGenerate): Promise<IApiKey & { formattedKey: string }> {
     const app = await this.appService.getByCode(dto.code);
     if (!app) {
       throw new Error('App not exist!');
@@ -76,9 +77,30 @@ export class ApiKeyService {
 
     const key = generateBytes(Number(dto.length));
 
+    const { PUBLIC_KEY_LENGTH = null, JWT_SECRET_API_KEY } = await this.appService.getConfigs({
+      code: dto.code,
+    });
+
+    if (dto.type === EApiKeyType.THIRD_PARTY && !PUBLIC_KEY_LENGTH) {
+      throw new Error("Public key length haven't configured!");
+    }
+
+    if (!JWT_SECRET_API_KEY) {
+      await this.appService.upConfig(app.code, {
+        mode: EAppConfigsUpdateType.SOFT,
+        configs: {
+          JWT_SECRET_API_KEY: this.DEFAULT_JWT_SECRET,
+        },
+      });
+
+      return this.generate(dto);
+    }
+
     const saved = await this.apiKeyRepository.save({
       appId: app.id,
       key: hash(key, Number(dto.length)),
+      publicKey:
+        dto.type === EApiKeyType.THIRD_PARTY ? generateBytes(Number(PUBLIC_KEY_LENGTH)) : null,
       description: dto.description,
       type: dto.type,
       active: true,
@@ -86,10 +108,13 @@ export class ApiKeyService {
 
     return {
       ...saved,
-      formattedKey: formatString(
-        API_KEY_CONFIG.stringFormat.format,
-        { APP_CODE: app.code, KEY_TYPE: dto.type, KEY: key },
-        API_KEY_CONFIG.stringFormat.separate
+      formattedKey: signJwt<TJwtApiKeyPayload>(
+        {
+          appCode: app.code,
+          key: key,
+          type: dto.type,
+        },
+        JWT_SECRET_API_KEY
       ),
     };
   }
@@ -120,6 +145,10 @@ export class ApiKeyService {
 
     const key = generateBytes(Number(dto.length));
 
+    const { JWT_SECRET_API_KEY } = await this.appService.getConfigs({
+      code: dto.code,
+    });
+
     await this.apiKeyRepository.update(
       { id: dto.id },
       {
@@ -130,10 +159,13 @@ export class ApiKeyService {
 
     return {
       ...apiKey,
-      formattedKey: formatString(
-        API_KEY_CONFIG.stringFormat.format,
-        { APP_CODE: app.code, KEY_TYPE: apiKey.type, KEY: key },
-        API_KEY_CONFIG.stringFormat.separate
+      formattedKey: signJwt<TJwtApiKeyPayload>(
+        {
+          appCode: app.code,
+          key: key,
+          type: apiKey.type,
+        },
+        JWT_SECRET_API_KEY
       ),
     };
   }
@@ -164,5 +196,13 @@ export class ApiKeyService {
     }
 
     return false;
+  }
+
+  public async extractPayload(token: string, code: string): Promise<TJwtApiKeyPayload | null> {
+    const { JWT_SECRET_API_KEY } = await this.appService.getConfigs({
+      code: code,
+    });
+
+    return verifyJwt<TJwtApiKeyPayload>(token, JWT_SECRET_API_KEY);
   }
 }

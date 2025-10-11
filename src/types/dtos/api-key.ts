@@ -1,10 +1,14 @@
 import { IsEnum, IsNotEmpty, IsString, IsUUID, MinLength } from 'class-validator';
-import { EApiKeyType } from '../../enums/api-key';
+import { EApiKeyType } from '../../enums';
 
 export class DtoApiKeyValidate {
   @IsNotEmpty()
   @IsString()
   apiKey: string;
+
+  @IsNotEmpty()
+  @IsEnum(EApiKeyType)
+  type: EApiKeyType;
 
   @IsNotEmpty()
   @IsString()

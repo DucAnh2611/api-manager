@@ -1,11 +1,12 @@
 import { EntitySchema } from 'typeorm';
 import { IApp } from './app';
-import { EApiKeyType } from '../../enums/api-key';
+import { EApiKeyType } from '../../enums';
 
 export interface IApiKey {
   id: string;
   key: string;
   type: EApiKeyType;
+  publicKey: string | null;
   description: string | null;
   appId: string;
   active: boolean;
@@ -36,6 +37,11 @@ export const ApiKeyEntity = new EntitySchema<IApiKey>({
     key: {
       type: 'text',
       nullable: false,
+    },
+    publicKey: {
+      type: 'text',
+      nullable: true,
+      default: null,
     },
     description: {
       type: 'varchar',

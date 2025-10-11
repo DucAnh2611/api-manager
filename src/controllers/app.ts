@@ -17,14 +17,14 @@ export class AppController {
       return {
         status: 400,
         success: false,
-        error: error,
+        error: (error as Error).message,
       };
     }
   }
 
-  public async upConfig(body: DtoAppUpConfig) {
+  public async upConfig(code: string, body: DtoAppUpConfig) {
     try {
-      const upConfig = await this.appService.upConfig(body);
+      const upConfig = await this.appService.upConfig(code, body);
 
       return {
         status: 200,
@@ -35,7 +35,7 @@ export class AppController {
       return {
         status: 400,
         success: false,
-        error: error,
+        error: (error as Error).message,
       };
     }
   }

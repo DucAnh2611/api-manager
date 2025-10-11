@@ -8,6 +8,7 @@ import {
   DtoAppUpdate,
 } from '../types';
 import { AppRepository } from '../repositories';
+import { EAppConfigsUpdateType } from '../enums';
 
 export class AppService {
   constructor(private readonly appRepository: AppRepository) {}
@@ -21,24 +22,41 @@ export class AppService {
     return app.configs;
   }
 
-  public async upConfig(dto: DtoAppUpConfig) {
-    const app = await this.getByCode(dto.code);
+  public async upConfig(code: string, dto: DtoAppUpConfig) {
+    const app = await this.getByCode(code);
     if (!app) {
       throw new Error('Not exist!');
     }
 
-    const { configs } = dto;
+    const { configs, mode } = dto;
+    let updateConfigs = app.configs;
+
+    switch (mode) {
+      case EAppConfigsUpdateType.HARD:
+        updateConfigs = configs;
+        break;
+
+      case EAppConfigsUpdateType.SOFT:
+        updateConfigs = {
+          ...updateConfigs,
+          ...configs,
+        };
+        break;
+
+      default:
+        break;
+    }
 
     await this.appRepository.update(
       {
         id: app.id,
       },
       {
-        configs,
+        configs: updateConfigs,
       }
     );
 
-    return configs;
+    return updateConfigs;
   }
 
   public async find() {
@@ -92,6 +110,11 @@ export class AppService {
     }
 
     const { id, code, name } = dto;
+
+    const isExistedCode = await this.getByCode(code);
+    if (isExistedCode) {
+      throw new Error('Existed!');
+    }
 
     const saved = await this.appRepository.update(
       {

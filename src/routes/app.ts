@@ -5,7 +5,7 @@ import { EValidateDtoType } from '../enums';
 import { AppService } from '../services';
 import { appRepository } from '../repositories';
 import { AppController } from '../controllers';
-import { EApiKeyType } from '../enums/api-key';
+import { EApiKeyType } from '../enums';
 
 export const AppRouter = Router();
 
@@ -14,18 +14,21 @@ const appController = new AppController(appService);
 
 AppRouter.put(
   '/cfg',
-  ValidateDto(DtoAppUpConfig, [EValidateDtoType.BODY]),
+  ValidateDto([{ dto: DtoAppUpConfig, type: EValidateDtoType.BODY }]),
   ValidateApiKey(EApiKeyType.UP_CONFIG),
   async (req, res) => {
-    const resData = await appController.upConfig(req.body);
+    const { code } = (req as any).apiKey;
+
+    const resData = await appController.upConfig(code, req.body);
 
     return res.status(resData.status).json(resData);
   }
 );
 
 AppRouter.get('/cfg', ValidateApiKey(EApiKeyType.CONFIG), async (req, res) => {
-  const { appCode } = (req as any).apiKey;
-  const resData = await appController.appConfigs({ code: appCode });
+  const { code } = (req as any).apiKey;
+
+  const resData = await appController.appConfigs({ code: code });
 
   return res.status(resData.status).json(resData);
 });

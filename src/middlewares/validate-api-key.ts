@@ -1,12 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
-import { EApiKeyType } from '../enums/api-key';
+import { EApiKeyType } from '../enums';
 import { ApiKeyService, AppService } from '../services';
 import { apiKeyRepository, appRepository } from '../repositories';
-import { API_KEY_CONFIG } from '../configs';
 
 export const ValidateApiKey = (type: EApiKeyType) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const apiKeyHeader: string = req.headers['x-api-key'] as string;
+    const authToken: string = (req.headers.authorization || '') as string;
+    const apiKeyAppHeader: string = req.headers['x-api-key-app'] as string;
+
+    const [_, apiKeyHeader] = authToken.split(' ');
+
     if (!apiKeyHeader) {
       return res.status(403).json({
         status: 403,
@@ -15,11 +18,11 @@ export const ValidateApiKey = (type: EApiKeyType) => {
       });
     }
 
-    const [appCodeHeader, typeApiKeyHeader, keyHeader] = apiKeyHeader.split(
-      API_KEY_CONFIG.stringFormat.separate
-    );
+    const apiKeyService = new ApiKeyService(apiKeyRepository, new AppService(appRepository));
 
-    if (typeApiKeyHeader !== type) {
+    const apikeyPayload = await apiKeyService.extractPayload(apiKeyHeader, apiKeyAppHeader);
+
+    if (!apikeyPayload || apikeyPayload.type !== type) {
       return res.status(403).json({
         status: 403,
         success: false,
@@ -27,12 +30,12 @@ export const ValidateApiKey = (type: EApiKeyType) => {
       });
     }
 
-    const apiKeyService = new ApiKeyService(apiKeyRepository, new AppService(appRepository));
+    const { appCode, key } = apikeyPayload;
 
     const valid = await apiKeyService.checkKeyType({
       type,
-      key: keyHeader,
-      appCode: appCodeHeader,
+      key: key,
+      appCode: appCode,
     });
 
     if (!valid) {
@@ -45,7 +48,8 @@ export const ValidateApiKey = (type: EApiKeyType) => {
 
     (req as any).apiKey = {
       type,
-      appCode: appCodeHeader,
+      code: appCode,
+      key: appCode,
     };
 
     next();

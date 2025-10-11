@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { ValidateDto } from '../middlewares';
-import { DtoApiKeyValidate } from '../types';
-import { EValidateDtoType } from '../enums';
 import { ApiKeyService, AppService } from '../services';
 import { apiKeyRepository, appRepository } from '../repositories';
 import { ApiKeyController } from '../controllers';
+import { DtoApiKeyValidate } from '../types';
+import { EValidateDtoType } from '../enums';
 
 export const ApiKeyRouter = Router();
 
@@ -14,7 +14,7 @@ const apiKeyController = new ApiKeyController(apiKeyService);
 
 ApiKeyRouter.post(
   '/check',
-  ValidateDto(DtoApiKeyValidate, [EValidateDtoType.BODY]),
+  ValidateDto([{ dto: DtoApiKeyValidate, type: EValidateDtoType.BODY }]),
   async (req, res) => {
     const resData = await apiKeyController.check(req.body);
 

@@ -5,7 +5,7 @@ export interface IApp {
   id: string;
   code: string;
   name: string;
-  configs: Record<string, string>;
+  configs: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
